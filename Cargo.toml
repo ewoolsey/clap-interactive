@@ -1,0 +1,17 @@
+[package]
+name = "clap-interactive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Eric Woolsey<ewoolsey@ualberta.ca>"]
+license = "MIT"
+description = "A work in progress interactive parser for clap."
+repository = "https://github.com/braincore/pid-rs"
+keywords = ["clap", "parser", "interactive", "cli", "command line", "shell"]
+readme = "README.md"
+
+[dependencies]
+clap = { version = "4.0.17" }
+inquire = "0.4.0"
+
+[dev-dependencies]
+clap = { version = "4.0.17", features = ["derive"] }
