@@ -65,7 +65,6 @@ fn parse_vec_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
 
 
 fn parse_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
-    println!("num_args: {:?}", arg.get_num_args());
     match arg.get_num_args() {
         // arg is a vec
         Some(_) => {
@@ -136,6 +135,7 @@ mod test {
         }
     }
 
+    #[ignore]
     #[test]
     fn test() {
         let git = Git::interactive_parse().unwrap();
