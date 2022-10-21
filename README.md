@@ -39,6 +39,6 @@
 
 ---
 
-This is a an extremely basic and flawed approach at getting clap enums to parse interactively using inquire. I think if someone put some time into it it could be very useful. Unfortunately I don't have the time to really make this shine. Please do not count on this to work out of the box. If you make improvements to this (which currently isn't hard haha), please submit a PR.
+This is a an extremely basic approach at getting clap enums to parse interactively using inquire. I think if someone put some time into it it could be very useful. Unfortunately I don't have the time to really make this shine. If you make improvements to this (which currently isn't hard haha), please submit a PR.
 
 ---
