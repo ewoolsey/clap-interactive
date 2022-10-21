@@ -1,6 +1,10 @@
 [package]
 name = "clap-interactive"
+<<<<<<< HEAD
 version = "0.1.1"
+=======
+version = "0.1.2"
+>>>>>>> develop
 edition = "2021"
 authors = ["Eric Woolsey<ewoolsey@ualberta.ca>"]
 license = "MIT"
