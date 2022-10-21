@@ -38,11 +38,47 @@ fn parse_optional_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     }
 }
 
-fn parse_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
-    match arg.is_required_set() {
-        true => parse_required_arg(arg),
-        false => parse_optional_arg(arg),
+fn parse_vec_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
+    let value_delimiter = arg.get_value_delimiter();
+    match value_delimiter {
+        Some(value_delimiter) => {
+            let mut new_args = parse_optional_arg(arg)?;
+            let mut total_args = vec![];
+            while new_args.len() != 0 {
+                total_args.extend(new_args);
+                new_args = parse_optional_arg(arg)?;
+            }
+            total_args.join(value_delimiter.to_string().as_str());
+            Ok(total_args)
+        },
+        None => {
+            let mut new_args = parse_optional_arg(arg)?;
+            let mut total_args = vec![];
+            while new_args.len() != 0 {
+                total_args.extend(new_args);
+                new_args = parse_optional_arg(arg)?;
+            }
+            Ok(total_args)
+        }
     }
+}
+
+
+fn parse_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
+    println!("num_args: {:?}", arg.get_num_args());
+    match arg.get_num_args() {
+        // arg is a vec
+        Some(_) => {
+            parse_vec_arg(arg)
+        },
+        None => {
+            match arg.is_required_set() {
+                true => parse_required_arg(arg),
+                false => parse_optional_arg(arg),
+            }
+        },
+    }
+
 }
 
 fn get_args<'a>(command: impl Iterator<Item = &'a Arg>) -> Result<Vec<String>, Box<dyn Error>> {
@@ -57,7 +93,6 @@ impl<T> InteractiveParse for T
 where T: Parser {
     fn interactive_parse() -> Result<Self, Box<dyn Error>> {
         let base_command = T::command();
-        //let mut commands = vec![command.clone()];
         let mut args = vec![base_command.get_name().to_string()];
         let mut command = &base_command;
         loop {
@@ -82,7 +117,7 @@ mod test {
         subcommand: SubCommand,
 
         #[arg(required=false)]
-        my_arg: String
+        my_arg: Option<String>
     }
 
     #[derive(Parser, Debug)]
@@ -90,10 +125,14 @@ mod test {
     enum SubCommand {
         Commit {
             #[arg(required=false)]
-            message: String
+            message: Option<String>
         },
         Clone {
-            address: String
+            address: Vec<String>
+        },
+        Merge {
+            #[arg(value_delimiter=',')]
+            address: Vec<String>
         }
     }
 

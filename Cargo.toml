@@ -14,4 +14,4 @@ clap = { version = "4.0.17" }
 inquire = "0.4.0"
 
 [dev-dependencies]
-clap = { version = "4.0.17", features = ["derive"] }
+clap = { version = "4.0.18", features = ["derive"] }
