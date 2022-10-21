@@ -13,13 +13,9 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let id = arg.get_id();
     match arg.is_positional() {
         // Arg is positional
-        true => {
-
-        },
+        true => { },
         // Arg uses flag
-        false => {
-            output_args.push(format!("--{}", id));
-        },
+        false => { output_args.push(format!("--{}", id)); },
     }
     let string = Text::new(arg.get_id().as_str()).prompt()?;
     output_args.push(string);
@@ -31,38 +27,23 @@ fn parse_optional_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     .with_help_message(arg.get_id().as_str())
     .prompt()? 
     {
-        true => {
-            parse_required_arg(arg)
-        },
+        true => { parse_required_arg(arg) },
         false => Ok(vec![]),
     }
 }
 
 fn parse_vec_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
-    let value_delimiter = arg.get_value_delimiter();
-    match value_delimiter {
-        Some(value_delimiter) => {
-            let mut new_args = parse_optional_arg(arg)?;
-            let mut total_args = vec![];
-            while new_args.len() != 0 {
-                total_args.extend(new_args);
-                new_args = parse_optional_arg(arg)?;
-            }
-            total_args.join(value_delimiter.to_string().as_str());
-            Ok(total_args)
-        },
-        None => {
-            let mut new_args = parse_optional_arg(arg)?;
-            let mut total_args = vec![];
-            while new_args.len() != 0 {
-                total_args.extend(new_args);
-                new_args = parse_optional_arg(arg)?;
-            }
-            Ok(total_args)
-        }
+    let mut new_args = parse_optional_arg(arg)?;
+    let mut total_args = vec![];
+    while new_args.len() != 0 {
+        total_args.extend(new_args);
+        new_args = parse_optional_arg(arg)?;
     }
+    if let Some(value_delimiter) = arg.get_value_delimiter() {
+        total_args.join(value_delimiter.to_string().as_str());
+    }
+    Ok(total_args)
 }
-
 
 fn parse_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     match arg.get_num_args() {
