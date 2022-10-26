@@ -40,7 +40,18 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let mut text = Text::new(arg.get_id().as_str());
 
     // Add a help string
+    #[cfg(debug_assertions)]
     let mut help_string = get_type_string(arg);
+
+    #[cfg(not(debug_assertions))]
+    let mut help_string = String::default();
+
+    #[cfg(debug_assertions)]
+    if let Some(help) = arg.get_help() {
+        help_string = format!("{}: {}", help_string, help);
+    }
+
+    #[cfg(not(debug_assertions))]
     if let Some(help) = arg.get_help() {
         help_string = format!("{}: {}", help_string, help);
     }
@@ -106,6 +117,7 @@ fn get_args<'a>(command: impl Iterator<Item = &'a Arg>) -> Result<Vec<String>, B
     Ok(arg_list)
 }
 
+#[cfg(debug_assertions)]
 fn get_type_string(arg: &Arg) -> String {
     let value_parser = arg.get_value_parser();
     let type_id = value_parser.type_id();
@@ -127,6 +139,7 @@ fn get_type_string(arg: &Arg) -> String {
 mod test {
     use std::str::FromStr;
     use std::fmt::Debug;
+    #[cfg(debug_assertions)]
     use clap::CommandFactory;
 
     use super::*;
@@ -183,6 +196,7 @@ mod test {
         println!("{:?}", git);   
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     fn test_get_type_string() {
         let arg = Git::command().get_arguments().find(|x| x.get_id() == "my_arg").unwrap().clone();
