@@ -125,13 +125,14 @@ mod test {
         }
     }
 
-    //#[ignore]
+    #[ignore]
     #[test]
     fn test_interactive() {
         let git = Git::interactive_parse().unwrap();
         println!("{:?}", git);   
     }
 
+    #[ignore]
     #[test]
     fn test_static() {
         let args = ["git", "-h"];
