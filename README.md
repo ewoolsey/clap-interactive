@@ -4,6 +4,14 @@
 
 ---
 
+## Demo
+
+---
+
+https://user-images.githubusercontent.com/8366997/198078221-5fa01e97-a921-4441-b054-f75f4d1ff272.mp4
+
+---
+
 ## Usage
 
 ---
@@ -39,6 +47,6 @@
 
 ---
 
-This is a an extremely basic approach at getting clap enums to parse interactively using inquire. I think if someone put some time into it it could be very useful. Unfortunately I don't have the time to really make this shine. If you make improvements to this (which currently isn't hard haha), please submit a PR.
+This is a an extremely basic approach at getting clap enums to parse interactively using inquire. If you make improvements to this please submit a PR, and if you have any issues or bugs please submit an issue. I'm currently actively maintaining this project as a person development tool.
 
 ---
