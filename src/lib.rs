@@ -18,6 +18,9 @@ where T: Parser {
             args.extend(get_args(command.get_arguments())?);
             let subcommands: Vec<&Command> = command.get_subcommands().collect();
             if subcommands.len() == 0 { break; }
+            if !command.is_subcommand_required_set() {
+                if !add_optional_command(command)? { break; }
+            }
             command = Select::new(command.get_name(), subcommands).prompt()?;
             args.push(command.get_name().to_string());
         }
@@ -46,6 +49,14 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
 
     output_args.push(text.prompt()?);
     Ok(output_args)
+}
+
+fn add_optional_command(command: &Command) -> Result<bool, Box<dyn Error>> {
+    let mut confirm = Confirm::new("Add optional command?");
+    if let Some(help) = command.get_subcommand_value_name() {
+        confirm = confirm.with_help_message(help);
+    }
+    Ok(confirm.prompt()?)
 }
 
 fn parse_optional_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
@@ -121,16 +132,18 @@ mod test {
     use super::*;
 
     #[derive(Parser, Debug)]
-    #[command(author, version, about, long_about = None)]
+    #[command(author, version, about, long_about = None, subcommand_value_name="my_subcommand")]
     struct Git {
+        /// my_subcommand doc
         #[command(subcommand)]
-        subcommand: SubCommand,
+        my_subcommand: Option<SubCommand>,
 
         /// MyArg help string
         #[arg(required=false, value_parser=tuple_parser::<String, String>)]
         my_arg: Option<Vec<(String, String)>>
     }
 
+    /// Other heading
     #[derive(Parser, Debug)]
     #[clap(rename_all = "snake_case", infer_subcommands=true)]
     enum SubCommand {
