@@ -17,8 +17,16 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
         // Arg uses flag
         false => { output_args.push(format!("--{}", id)); },
     }
-    let string = Text::new(arg.get_id().as_str()).prompt()?;
-    output_args.push(string);
+    let mut text = Text::new(arg.get_id().as_str());
+
+    // Add a help string
+    let help_string;
+    if let Some(help) = arg.get_help() {
+        help_string = help.to_string();
+        text = text.with_help_message(help_string.as_str());
+    }
+
+    output_args.push(text.prompt()?);
     Ok(output_args)
 }
 
@@ -96,6 +104,7 @@ mod test {
         #[command(subcommand)]
         subcommand: SubCommand,
 
+        /// MyArg help string
         #[arg(required=false)]
         my_arg: Option<String>
     }
@@ -116,10 +125,17 @@ mod test {
         }
     }
 
-    #[ignore]
+    //#[ignore]
     #[test]
-    fn test() {
+    fn test_interactive() {
         let git = Git::interactive_parse().unwrap();
+        println!("{:?}", git);   
+    }
+
+    #[test]
+    fn test_static() {
+        let args = ["git", "-h"];
+        let git = Git::parse_from(args);
         println!("{:?}", git);   
     }
 }
