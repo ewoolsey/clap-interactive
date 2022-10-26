@@ -53,7 +53,7 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
 
     #[cfg(not(debug_assertions))]
     if let Some(help) = arg.get_help() {
-        help_string = format!("{}: {}", help_string, help);
+        help_string = format!("{}", help);
     }
 
     text = text.with_help_message(help_string.as_str());
