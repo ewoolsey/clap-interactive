@@ -8,6 +8,23 @@ where Self: Sized
     fn interactive_parse() -> Result<Self, Box<dyn Error>>;
 }
 
+impl<T> InteractiveParse for T
+where T: Parser {
+    fn interactive_parse() -> Result<Self, Box<dyn Error>> {
+        let base_command = T::command();
+        let mut args = vec![base_command.get_name().to_string()];
+        let mut command = &base_command;
+        loop {
+            args.extend(get_args(command.get_arguments())?);
+            let subcommands: Vec<&Command> = command.get_subcommands().collect();
+            if subcommands.len() == 0 { break; }
+            command = Select::new(command.get_name(), subcommands).prompt()?;
+            args.push(command.get_name().to_string());
+        }
+        Ok(T::parse_from(args))
+    }
+}
+
 fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let mut output_args = vec![];
     let id = arg.get_id();
@@ -20,11 +37,12 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let mut text = Text::new(arg.get_id().as_str());
 
     // Add a help string
-    let help_string;
+    let mut help_string = get_type_string(arg);
     if let Some(help) = arg.get_help() {
-        help_string = help.to_string();
-        text = text.with_help_message(help_string.as_str());
+        help_string = format!("{}: {}", help_string, help);
     }
+
+    text = text.with_help_message(help_string.as_str());
 
     output_args.push(text.prompt()?);
     Ok(output_args)
@@ -77,25 +95,29 @@ fn get_args<'a>(command: impl Iterator<Item = &'a Arg>) -> Result<Vec<String>, B
     Ok(arg_list)
 }
 
-impl<T> InteractiveParse for T
-where T: Parser {
-    fn interactive_parse() -> Result<Self, Box<dyn Error>> {
-        let base_command = T::command();
-        let mut args = vec![base_command.get_name().to_string()];
-        let mut command = &base_command;
-        loop {
-            args.extend(get_args(command.get_arguments())?);
-            let subcommands: Vec<&Command> = command.get_subcommands().collect();
-            if subcommands.len() == 0 { break; }
-            command = Select::new(command.get_name(), subcommands).prompt()?;
-            args.push(command.get_name().to_string());
+fn get_type_string(arg: &Arg) -> String {
+    let value_parser = arg.get_value_parser();
+    let type_id = value_parser.type_id();
+    let mut long_type_name = format!("{:?}", type_id);
+    long_type_name = long_type_name.replace("(", "");
+    long_type_name = long_type_name.replace(")", "");
+    let mut type_list: Vec<&str> = long_type_name.split(", ").collect();
+    for type_str in &mut type_list {
+        if let Some(split) = type_str.rsplit_once(":") {
+            *type_str = split.1
         }
-        Ok(T::parse_from(args))
     }
+    let combine = type_list.join(",");
+    let output = format!("<{}>", combine);
+    output
 }
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+    use std::fmt::Debug;
+    use clap::CommandFactory;
+
     use super::*;
 
     #[derive(Parser, Debug)]
@@ -105,8 +127,8 @@ mod test {
         subcommand: SubCommand,
 
         /// MyArg help string
-        #[arg(required=false)]
-        my_arg: Option<String>
+        #[arg(required=false, value_parser=tuple_parser::<String, String>)]
+        my_arg: Option<Vec<(String, String)>>
     }
 
     #[derive(Parser, Debug)]
@@ -117,12 +139,20 @@ mod test {
             message: Option<String>
         },
         Clone {
-            address: Vec<String>
+            #[arg(value_parser=tuple_parser::<String, String>)]
+            address: Vec<(String, String)>
         },
         Merge {
             #[arg(value_delimiter=',')]
             address: Vec<String>
         }
+    }
+
+    pub fn tuple_parser<T, U>(s: &str) -> Result<(T, U), String> 
+    where T: FromStr, U: FromStr, <T as FromStr>::Err: Debug, <U as FromStr>::Err: Debug,
+    {
+        let vec: Vec<&str> = s.split(',').collect();
+        Ok((T::from_str(vec[0]).unwrap(), U::from_str(vec[1]).unwrap()))
     }
 
     #[ignore]
@@ -138,5 +168,12 @@ mod test {
         let args = ["git", "-h"];
         let git = Git::parse_from(args);
         println!("{:?}", git);   
+    }
+
+    #[test]
+    fn test_get_type_string() {
+        let arg = Git::command().get_arguments().find(|x| x.get_id() == "my_arg").unwrap().clone();
+        let type_string = get_type_string(&arg);
+        assert_eq!(type_string.as_str(), "<String,String>")
     }
 }
