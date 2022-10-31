@@ -21,13 +21,11 @@ where
         loop {
             args.extend(get_args(command.get_arguments())?);
             let subcommands: Vec<&Command> = command.get_subcommands().collect();
-            if subcommands.len() == 0 {
+            if subcommands.is_empty() {
                 break;
             }
-            if !command.is_subcommand_required_set() {
-                if !add_optional_command(command)? {
-                    break;
-                }
+            if !command.is_subcommand_required_set() && !add_optional_command(command)? {
+                break;
             }
             command = Select::new(command.get_name(), subcommands).prompt()?;
             args.push(command.get_name().to_string());
@@ -90,7 +88,7 @@ fn parse_optional_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
 fn parse_vec_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let mut new_args = parse_optional_arg(arg)?;
     let mut total_args = vec![];
-    while new_args.len() != 0 {
+    while !new_args.is_empty() {
         total_args.extend(new_args);
         new_args = parse_optional_arg(arg)?;
     }
@@ -124,11 +122,11 @@ fn get_type_string(arg: &Arg) -> String {
     let value_parser = arg.get_value_parser();
     let type_id = value_parser.type_id();
     let mut long_type_name = format!("{:?}", type_id);
-    long_type_name = long_type_name.replace("(", "");
-    long_type_name = long_type_name.replace(")", "");
+    long_type_name = long_type_name.replace('(', "");
+    long_type_name = long_type_name.replace(')', "");
     let mut type_list: Vec<&str> = long_type_name.split(", ").collect();
     for type_str in &mut type_list {
-        if let Some(split) = type_str.rsplit_once(":") {
+        if let Some(split) = type_str.rsplit_once(':') {
             *type_str = split.1
         }
     }
