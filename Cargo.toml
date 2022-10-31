@@ -1,6 +1,6 @@
 [package]
 name = "clap-interactive"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 authors = ["Eric Woolsey<ewoolsey@ualberta.ca>"]
 license = "MIT"
@@ -11,7 +11,7 @@ readme = "README.md"
 
 [dependencies]
 clap = { version = "4.0.18" }
-inquire = "0.4.0"
+inquire = "0.5.1"
 
 [dev-dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
