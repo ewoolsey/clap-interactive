@@ -1,15 +1,19 @@
-use std::{error::Error};
-use clap::{Parser, Arg, Command};
-use inquire::{Text, Confirm, Select};
+use std::error::Error;
+
+use clap::{Arg, Command, Parser};
+use inquire::{Confirm, Select, Text};
 
 pub trait InteractiveParse
-where Self: Sized
+where
+    Self: Sized,
 {
     fn interactive_parse() -> Result<Self, Box<dyn Error>>;
 }
 
 impl<T> InteractiveParse for T
-where T: Parser {
+where
+    T: Parser,
+{
     fn interactive_parse() -> Result<Self, Box<dyn Error>> {
         let base_command = T::command();
         let mut args = vec![base_command.get_name().to_string()];
@@ -17,9 +21,13 @@ where T: Parser {
         loop {
             args.extend(get_args(command.get_arguments())?);
             let subcommands: Vec<&Command> = command.get_subcommands().collect();
-            if subcommands.len() == 0 { break; }
+            if subcommands.len() == 0 {
+                break;
+            }
             if !command.is_subcommand_required_set() {
-                if !add_optional_command(command)? { break; }
+                if !add_optional_command(command)? {
+                    break;
+                }
             }
             command = Select::new(command.get_name(), subcommands).prompt()?;
             args.push(command.get_name().to_string());
@@ -33,9 +41,11 @@ fn parse_required_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     let id = arg.get_id();
     match arg.is_positional() {
         // Arg is positional
-        true => { },
+        true => {}
         // Arg uses flag
-        false => { output_args.push(format!("--{}", id)); },
+        false => {
+            output_args.push(format!("--{}", id));
+        }
     }
     let mut text = Text::new(arg.get_id().as_str());
 
@@ -71,11 +81,8 @@ fn add_optional_command(command: &Command) -> Result<bool, Box<dyn Error>> {
 }
 
 fn parse_optional_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
-    match Confirm::new("Add optional value?")
-    .with_help_message(arg.get_id().as_str())
-    .prompt()? 
-    {
-        true => { parse_required_arg(arg) },
+    match Confirm::new("Add optional value?").with_help_message(arg.get_id().as_str()).prompt()? {
+        true => parse_required_arg(arg),
         false => Ok(vec![]),
     }
 }
@@ -96,17 +103,12 @@ fn parse_vec_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
 fn parse_arg(arg: &Arg) -> Result<Vec<String>, Box<dyn Error>> {
     match arg.get_num_args() {
         // arg is a vec
-        Some(_) => {
-            parse_vec_arg(arg)
-        },
-        None => {
-            match arg.is_required_set() {
-                true => parse_required_arg(arg),
-                false => parse_optional_arg(arg),
-            }
+        Some(_) => parse_vec_arg(arg),
+        None => match arg.is_required_set() {
+            true => parse_required_arg(arg),
+            false => parse_optional_arg(arg),
         },
     }
-
 }
 
 fn get_args<'a>(command: impl Iterator<Item = &'a Arg>) -> Result<Vec<String>, Box<dyn Error>> {
@@ -137,8 +139,8 @@ fn get_type_string(arg: &Arg) -> String {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
-    use std::fmt::Debug;
+    use std::{fmt::Debug, str::FromStr};
+
     #[cfg(debug_assertions)]
     use clap::CommandFactory;
 
@@ -153,29 +155,33 @@ mod test {
 
         /// MyArg help string
         #[arg(required=false, value_parser=tuple_parser::<String, String>)]
-        my_arg: Option<Vec<(String, String)>>
+        my_arg: Option<Vec<(String, String)>>,
     }
 
     /// Other heading
     #[derive(Parser, Debug)]
-    #[clap(rename_all = "snake_case", infer_subcommands=true)]
+    #[clap(rename_all = "snake_case", infer_subcommands = true)]
     enum SubCommand {
         Commit {
-            #[arg(required=false)]
-            message: Option<String>
+            #[arg(required = false)]
+            message: Option<String>,
         },
         Clone {
             #[arg(value_parser=tuple_parser::<String, String>)]
-            address: Vec<(String, String)>
+            address: Vec<(String, String)>,
         },
         Merge {
-            #[arg(value_delimiter=',')]
-            address: Vec<String>
-        }
+            #[arg(value_delimiter = ',')]
+            address: Vec<String>,
+        },
     }
 
-    pub fn tuple_parser<T, U>(s: &str) -> Result<(T, U), String> 
-    where T: FromStr, U: FromStr, <T as FromStr>::Err: Debug, <U as FromStr>::Err: Debug,
+    pub fn tuple_parser<T, U>(s: &str) -> Result<(T, U), String>
+    where
+        T: FromStr,
+        U: FromStr,
+        <T as FromStr>::Err: Debug,
+        <U as FromStr>::Err: Debug,
     {
         let vec: Vec<&str> = s.split(',').collect();
         Ok((T::from_str(vec[0]).unwrap(), U::from_str(vec[1]).unwrap()))
@@ -185,7 +191,7 @@ mod test {
     #[test]
     fn test_interactive() {
         let git = Git::interactive_parse().unwrap();
-        println!("{:?}", git);   
+        println!("{:?}", git);
     }
 
     #[ignore]
@@ -193,7 +199,7 @@ mod test {
     fn test_static() {
         let args = ["git", "-h"];
         let git = Git::parse_from(args);
-        println!("{:?}", git);   
+        println!("{:?}", git);
     }
 
     #[cfg(debug_assertions)]
