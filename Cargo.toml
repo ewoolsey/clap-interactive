@@ -1,6 +1,6 @@
 [package]
 name = "clap-interactive"
-version = "0.1.9"
+version = "0.2.0"
 edition = "2021"
 authors = ["Eric Woolsey<ewoolsey@ualberta.ca>"]
 license = "MIT"
@@ -10,6 +10,7 @@ keywords = ["clap", "parser", "interactive", "cli", "shell"]
 readme = "README.md"
 
 [dependencies]
+thiserror = "1"
 clap = { version = "4.0.18" }
 inquire = "0.5.1"
 
