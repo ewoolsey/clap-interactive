@@ -13,4 +13,10 @@ pub enum ClapIntError {
 
     #[error("{0}")]
     Clap(#[from] clap::Error),
+
+    #[error("clap-interactive supplied these args: {args:?}\n{clap_error}")]
+    WrapClap {
+        args: Vec<String>,
+        clap_error: clap::Error,
+    },
 }

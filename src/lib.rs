@@ -1,6 +1,8 @@
 pub mod error;
 
 use clap::{Arg, Command, Parser};
+#[cfg(test)]
+use error::ClapIntError;
 use error::ClapIntResult;
 use inquire::{Confirm, Select, Text};
 
@@ -31,7 +33,15 @@ where
             command = Select::new(command.get_name(), subcommands).prompt()?;
             args.push(command.get_name().to_string());
         }
-        Ok(T::parse_from(args))
+        Ok(
+            #[cfg(test)]
+            T::try_parse_from(args.clone()).map_err(|e| ClapIntError::WrapClap {
+                args: args,
+                clap_error: e,
+            })?,
+            #[cfg(not(test))]
+            T::parse_from(args),
+        )
     }
 }
 
@@ -70,14 +80,15 @@ where
 fn parse_required_arg(arg: &Arg) -> ClapIntResult<Vec<String>> {
     let mut output_args = vec![];
     let id = arg.get_id();
-    match arg.is_positional() {
+    let prefix = match arg.is_positional() {
         // Arg is positional
-        true => {}
+        true => String::new(),
         // Arg uses flag
         false => {
-            output_args.push(format!("--{}", id));
+            // output_args.push(format!("--{}", id));
+            format!("--{}=", id)
         }
-    }
+    };
     let mut text = Text::new(arg.get_id().as_str());
 
     // Add a help string
@@ -99,7 +110,7 @@ fn parse_required_arg(arg: &Arg) -> ClapIntResult<Vec<String>> {
 
     text = text.with_help_message(help_string.as_str());
 
-    output_args.push(text.prompt()?);
+    output_args.push(format!("{}{}", prefix, text.prompt()?));
     Ok(output_args)
 }
 
@@ -188,7 +199,7 @@ mod test {
         my_subcommand: Option<SubCommand>,
 
         /// MyArg help string
-        #[arg(required=false, value_parser=tuple_parser::<String, String>)]
+        #[arg(long, required=false, value_parser=tuple_parser::<String, String>)]
         my_arg: Option<Vec<(String, String)>>,
     }
 
@@ -207,6 +218,8 @@ mod test {
         Merge {
             #[arg(value_delimiter = ',')]
             address: Vec<String>,
+            #[arg(long)]
+            bool: bool,
         },
     }
 
@@ -224,8 +237,15 @@ mod test {
     #[ignore]
     #[test]
     fn test_interactive() {
-        let git = Git::interactive_parse().unwrap();
-        println!("{:?}", git);
+        let git = Git::interactive_parse();
+        match git {
+            Ok(git) => {
+                println!("{:?}", git);
+            }
+            Err(err) => {
+                println!("{}", err);
+            }
+        }
     }
 
     #[ignore]
